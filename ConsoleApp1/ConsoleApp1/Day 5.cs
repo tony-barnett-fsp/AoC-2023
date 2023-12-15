@@ -108,33 +108,14 @@ namespace ConsoleApp1
 
             Console.WriteLine("starting on run");
 
-            var options = new string[]{
-                "location",
-                "humidity",
-                "temperature",
-                "light",
-                "water",
-                "fertilizer",
-                "soil",
-                "seed",
-            };
-
-            //for(var i = 0; i < options.Length - 1 ; i++)
-            //{
-            //    var source = options[i];
-            //    var destination = options[i+1];
-            //    var min = map[destination][source].Min(x => x.Value);
-            //    var lowestOptions = map[destination][source].Where(x => x.Value == min).First();
-            //}
-            var foo = new ConcurrentBag<long>();
-            Parallel.ForEach(sn, x =>
+            var foo = new List<long>();
+            foreach (var (start, count) in sn.OrderBy(x => x.Item2))
             {
                 var startTimestamp = Stopwatch.GetTimestamp();
 
+
                 var minVal = long.MaxValue;
-                var start = x.Item1;
-                var count = x.Item2;
-                Console.WriteLine($"starting from {start} and trying {count} times");
+                Console.WriteLine($"starting from {start} and trying {count} times at {startTimestamp}");
 
                 for (var seedNumber = start; seedNumber < start + count; seedNumber++)
                 {
@@ -155,13 +136,15 @@ namespace ConsoleApp1
                         key = next;
                     }
                     //Console.WriteLine($"comparing {result} to {currentNumber}");
-                    minVal = Math.Min(result, currentNumber);
+                    minVal = Math.Min(minVal, currentNumber);
                 }
 
                 Console.WriteLine($"minVal found for this was {minVal} in {Stopwatch.GetElapsedTime(startTimestamp)}");
                 foo.Add(minVal);
-            });
 
+            }
+            //Console.WriteLine($"foo contains {string.Join("\n", foo)}");
+            result = foo.Min();
             //Console.WriteLine(string.Join('\n', seedNumbers));
             Console.WriteLine(result);
         }
