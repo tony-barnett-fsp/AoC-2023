@@ -50,7 +50,7 @@ namespace ConsoleApp1
             Console.WriteLine(output);
         }
 
-        internal async void Part2()
+        internal void Part2()
         {
             //_input = "0 3 6 9 12 15\r\n1 3 6 10 15 21\r\n10 13 16 21 30 45";
             var lines = _input.Split(new char[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries);
