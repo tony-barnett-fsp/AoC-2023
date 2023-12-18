@@ -3,5 +3,5 @@ using ConsoleApp1;
 
 Console.WriteLine("Hello, World!");
 
-new Day8().Part1();
-new Day8().Part2();
+new Day10().Part1();
+new Day10().Part2();
