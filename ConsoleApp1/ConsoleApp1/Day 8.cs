@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Linq;
+using System.Reflection.Emit;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
@@ -65,7 +66,7 @@ namespace ConsoleApp1
             Console.WriteLine(output);
         }
 
-        internal async void Part2()
+        internal void Part2Old()
         {
             //_input = "LR\r\n\r\n11A = (11B, XXX)\r\n11B = (XXX, 11Z)\r\n11Z = (11B, XXX)\r\n22A = (22B, XXX)\r\n22B = (22C, 22C)\r\n22C = (22Z, 22Z)\r\n22Z = (22B, 22B)\r\nXXX = (XXX, XXX)";
 
@@ -88,7 +89,7 @@ namespace ConsoleApp1
             while (!currentNodes.All(c => c.EndsWith('Z')))
             {
                 var instructionIndex = output % instructions.Length;
-                if(instructionIndex > instructions.Length || instructionIndex < 0)
+                if (instructionIndex > instructions.Length || instructionIndex < 0)
                 {
                     throw new Exception($"output: {output}, instructions: {instructions.Count()}, instructionIndex: {instructionIndex}");
                 }
@@ -130,20 +131,114 @@ namespace ConsoleApp1
                 }
                 output++;
 
-                if(output % 100_000_000 == 0)
+                if (output % 100_000_000 == 0)
                 {
                     Console.WriteLine($"{output} took {Stopwatch.GetElapsedTime(startTime)}");
                     startTime = Stopwatch.GetTimestamp();
                 }
 
                 var zs = currentNodes.Where(x => x.EndsWith('Z')).Count();
-                if(zs > 3)
+                if (zs > 3)
                 {
                     Console.WriteLine($"After {output} iterations we have {zs} Zs: {string.Join(';', currentNodes)}");
                 }
             }
 
             Console.WriteLine(output);
+        }
+        internal void Part2()
+        {
+            //_input = "LR\r\n\r\n11A = (11B, XXX)\r\n11B = (XXX, 11Z)\r\n11Z = (11B, XXX)\r\n22A = (22B, XXX)\r\n22B = (22C, 22C)\r\n22C = (22Z, 22Z)\r\n22Z = (22B, 22B)\r\nXXX = (XXX, XXX)";
+
+            var lines = _input.Split(new char[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries);
+
+            long output = 0;
+
+            var instructions = lines.First();
+
+            var map = BuildMap(lines);
+
+            var currentNodes = map.Keys
+                .Where(k => k.EndsWith('A'))
+                .ToArray();
+
+            var cycle = new long[currentNodes.Length];
+
+            var zPlaces = new Dictionary<int, Dictionary<int, string>>();
+
+            for (var node = 0; node < currentNodes.Length; node++)
+            {
+                zPlaces.Add(node, new Dictionary<int, string>());
+                var currentNode = "";
+                output = 0;
+                while (true)
+                {
+                    var instructionIndex = (int)(output++ % instructions.Length);
+                    var instruction = instructions[instructionIndex];
+
+                    currentNode = currentNodes[node];
+                    var currentMap = map[currentNode];
+
+                    currentNode = instruction switch
+                    {
+                        'L' => currentMap.Item1,
+                        'R' => currentMap.Item2,
+                        _ => throw new Exception()
+                    };
+
+                    if (currentNode.EndsWith('Z'))
+                    {
+                        if (zPlaces[node].ContainsKey(instructionIndex) && zPlaces[node][instructionIndex] == currentNode)
+                        {
+                            cycle[node] = output;
+                            break;
+                        }
+
+                        zPlaces[node][instructionIndex] = currentNode;
+                    }
+                    currentNodes[node] = currentNode;
+                }
+            }
+
+            Console.WriteLine(cycle.Aggregate((a, b) => a * b));
+
+            var primeFactors = new Dictionary<int, List<int>>();
+            for (var i = 0; i < cycle.Length; i++)
+            {
+                var factors = new List<int> { 307 };
+                var sqrtCurr = (int)Math.Ceiling(Math.Sqrt(cycle[i]));
+                var curr = cycle[i] / 307;
+                for (var j = 2; j <= sqrtCurr; j++)
+                {
+                    while (curr % j == 0)
+                    {
+                        factors.Add(j);
+                        curr /= j;
+                    }
+
+                    if (curr == 1)
+                    {
+                        primeFactors.Add(i, factors);
+                        break;
+                    }
+                }
+            }
+
+            var commonFactors = new List<long>();
+            foreach (var pf in primeFactors.Keys)
+            {
+                foreach (var factor in primeFactors[pf])
+                {
+
+                    if (!commonFactors.Contains(factor))
+                    {
+                        commonFactors.Add(factor);
+                    }
+                }
+            }
+            var lcm = commonFactors.Aggregate((x, y) => x * y);
+            Console.WriteLine(lcm);
+            Console.WriteLine(lcm / 307);
         }
     }
 }
