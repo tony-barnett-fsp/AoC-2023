@@ -76,28 +76,28 @@ namespace ConsoleApp1
             if (coord2 > 0 && grid[coord1][coord2 - 1] != '.' && NextDirectionIsValid(Direction.Left, grid[coord1][coord2 - 1]))
             {
                 currentLocations.Add((coord1, coord2, Direction.Left));
-                paths.Add(new List<(int, int, long)> ());
+                paths.Add(new List<(int, int, long)>());
                 stopPath.Add(false);
             }
 
             if (coord2 < grid[coord1].Length && grid[coord1][coord2 + 1] != '.' && NextDirectionIsValid(Direction.Right, grid[coord1][coord2 + 1]))
             {
                 currentLocations.Add((coord1, coord2, Direction.Right));
-                paths.Add(new List<(int, int, long)> ());
+                paths.Add(new List<(int, int, long)>());
                 stopPath.Add(false);
             }
 
             if (coord1 > 0 && grid[coord1 - 1][coord2] != '.' && NextDirectionIsValid(Direction.Up, grid[coord1 - 1][coord2]))
             {
                 currentLocations.Add((coord1, coord2, Direction.Up));
-                paths.Add(new List<(int, int, long)> ());
+                paths.Add(new List<(int, int, long)>());
                 stopPath.Add(false);
             }
 
             if (coord1 < grid.Length && grid[coord1 + 1][coord2] != '.' && NextDirectionIsValid(Direction.Down, grid[coord1 + 1][coord2]))
             {
-                currentLocations.Add((coord1 , coord2, Direction.Down));
-                paths.Add(new List<(int, int, long)> ());
+                currentLocations.Add((coord1, coord2, Direction.Down));
+                paths.Add(new List<(int, int, long)>());
                 stopPath.Add(false);
             }
 
@@ -156,6 +156,211 @@ namespace ConsoleApp1
 
             Console.WriteLine(output);
         }
-        public void Part2() { }
+
+        private bool pointIsInsideShape((int, int) point, char[][] grid)
+        {
+            var (x, y) = point;
+            if (x == 0 || y == 0)
+            {
+                return false;
+            }
+
+            var isInShape = false;
+            var isRight = false;
+            var isLeft = false;
+
+            for (var i = x - 1; i > 0; i--)
+            {
+                var currentchar = grid[i][y];
+
+                if (currentchar == '-')
+                {
+                    isInShape = !isInShape;
+                    isLeft = false;
+                    isRight = false;
+                }
+
+                if (currentchar == 'L')
+                {
+                    isLeft = true;
+                    continue;
+                }
+
+                if (currentchar == 'J')
+                {
+                    isRight = true;
+                    continue;
+                }
+
+                if (currentchar == 'F')
+                {
+                    if (!isLeft)
+                    {
+                        isInShape = !isInShape;
+                    }
+                    isLeft = false;
+                    isRight = false;
+                }
+
+                if (currentchar == '7')
+                {
+                    if (!isRight)
+                    {
+                        isInShape = !isInShape;
+                    }
+                    isLeft = false;
+                    isRight = false;
+                }
+            }
+
+            return isInShape;
+        }
+
+        public void Part2()
+        {
+            long output = 0;
+            //_input = ".....\r\n.S-7.\r\n.|.|.\r\n.L-J.\r\n.....";
+
+            var grid = _input
+                .Split(new char[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries)
+                .Select(x => x.ToArray())
+                .ToArray();
+
+            var coord1 = 0;
+            var coord2 = 0;
+
+            for (var i = 0; i < grid.Length; i++)
+            {
+                if (grid[i].Contains('S'))
+                {
+                    coord1 = i;
+                    coord2 = grid[i].AsSpan().IndexOf('S');
+                    break;
+                }
+            }
+
+            var currentLocations = new List<(int, int, Direction)>();
+            var paths = new List<List<(int, int, long)>>();
+            var stopPath = new List<bool>();
+
+
+            if (coord2 > 0 && grid[coord1][coord2 - 1] != '.' && NextDirectionIsValid(Direction.Left, grid[coord1][coord2 - 1]))
+            {
+                currentLocations.Add((coord1, coord2, Direction.Left));
+                paths.Add(new List<(int, int, long)>());
+                stopPath.Add(false);
+            }
+
+            if (coord2 < grid[coord1].Length && grid[coord1][coord2 + 1] != '.' && NextDirectionIsValid(Direction.Right, grid[coord1][coord2 + 1]))
+            {
+                currentLocations.Add((coord1, coord2, Direction.Right));
+                paths.Add(new List<(int, int, long)>());
+                stopPath.Add(false);
+            }
+
+            if (coord1 > 0 && grid[coord1 - 1][coord2] != '.' && NextDirectionIsValid(Direction.Up, grid[coord1 - 1][coord2]))
+            {
+                currentLocations.Add((coord1, coord2, Direction.Up));
+                paths.Add(new List<(int, int, long)>());
+                stopPath.Add(false);
+            }
+
+            if (coord1 < grid.Length && grid[coord1 + 1][coord2] != '.' && NextDirectionIsValid(Direction.Down, grid[coord1 + 1][coord2]))
+            {
+                currentLocations.Add((coord1, coord2, Direction.Down));
+                paths.Add(new List<(int, int, long)>());
+                stopPath.Add(false);
+            }
+
+            long index = 0;
+            var stop = false;
+            while (!stop)
+            {
+                for (var i = 0; i < currentLocations.Count; i++)
+                {
+                    if (stopPath[i])
+                    {
+                        continue;
+                    }
+
+                    var (x, y, direction) = currentLocations[i];
+
+                    paths[i].Add((x, y, index));
+
+                    switch (direction)
+                    {
+                        case Direction.Left:
+                            y--;
+                            break;
+                        case Direction.Right:
+                            y++;
+                            break;
+                        case Direction.Up:
+                            x--;
+                            break;
+                        case Direction.Down:
+                            x++;
+                            break;
+                    }
+
+                    if (grid[x][y] == '.')
+                    {
+                        stopPath[i] = true;
+                        break;
+                    }
+
+                    var nextDirection = GetNextDirection(direction, grid[x][y]);
+
+
+                    if (paths.Any(a => a.Any(b => (b.Item1, b.Item2) == (x, y))))
+                    {
+                        output = index;
+                        stop = true;
+                        break;
+                    }
+
+                    currentLocations[i] = (x, y, nextDirection);
+                }
+
+                index++;
+            }
+
+            var dots = new List<(int, int)>();
+            for (var x = 0; x < grid.Length; x++)
+            {
+                for (var y = 0; y < grid[x].Length; y++)
+                {
+                    var c = paths.Any(a => a.Any(b => (b.Item1, b.Item2) == (x, y))) ? grid[x][y] : ' ';
+
+                    grid[x][y] = c;
+                }
+            }
+
+            var path = paths[0].Where(p => grid[p.Item1][p.Item2] == '|' || grid[p.Item1][p.Item2] == '-').ToArray();
+
+            for (var i = 0; i < path.Length - 1; i++)
+            {
+                var (x, y, _) = path[i];
+                var (nextx, nexty, _) = path[i + 1];
+
+                output += (x * nexty - y * nextx);
+            }
+
+            var (endx, endy, _) = paths[0].Last();
+            var (nextendx, nextendy, _) = paths[1].Last();
+
+            output += (endx * nextendy - endy * nextendx);
+
+            path = paths[1].Where(p => grid[p.Item1][p.Item2] == '|' || grid[p.Item1][p.Item2] == '-').ToArray();
+            for (var i = path.Length - 1; i > 0; i--)
+            {
+                var (x, y, _) = path[i];
+                var (nextx, nexty, _) = path[i - 1];
+
+                output += (x * nexty - y * nextx);
+            }
+
+            Console.WriteLine(output / 2);
+        }
     }
 }
