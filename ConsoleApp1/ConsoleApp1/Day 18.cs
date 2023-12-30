@@ -35,57 +35,53 @@ namespace ConsoleApp1
             // a pixel is inside the shape if it hits an odd number
             // of walls in any direction. We picked right. A horizontal
             // section counts as a single wall (so ### ### is 2 walls, not 6)
-            Parallel.For(0, grid2.Count, i =>
-            {
-                //for (var i = 0; i < grid2.Count; i++)
-                //{
-                var z = new Dictionary<int, char>();
-                for (var j = 0; j < largestKey; j++)
+            //Parallel.For(0, grid2.Count, i =>
+            //{
+                for (var i = 0; i < grid2.Count; i++)
                 {
-                    if (grid2[i].ContainsKey(j))
-                    {
-                        z[j] = grid2[i][j];
-                        continue;
-                    }
-                    var hashesToRight = 0;
+                var z = new Dictionary<int, char>();
+                var hashPoints = new List<int>();
 
-                    for (var x = j; x < largestKey; x++)
+                for (var x = 0; x < largestKey; x++)
+                {
+                    if (grid2[i].ContainsKey(x))
                     {
-                        if (grid2[i].ContainsKey(x))
+                        if (!(i > 0 && grid2[i - 1].ContainsKey(x)
+                            && i < grid2.Count - 1 && grid2[i + 1].ContainsKey(x)))
                         {
-                            if (!(i > 0 && grid2[i - 1].ContainsKey(x)
-                                && i < grid2.Count - 1 && grid2[i + 1].ContainsKey(x)))
+                            var isBelow = false;
+                            if (i > 0 && grid2[i - 1].ContainsKey(x))
                             {
-                                var isBelow = false;
-                                if (i > 0 && grid2[i - 1].ContainsKey(x))
-                                {
-                                    isBelow = true;
-                                }
-
-                                while (grid2[i].ContainsKey(x + 1))
-                                {
-                                    x++;
-                                }
-
-                                if ((i > 0 && isBelow && grid2[i - 1].ContainsKey(x))
-                                    || (i < grid2.Count - 1 && !isBelow && grid2[i + 1].ContainsKey(x)))
-                                {
-                                    continue;
-                                }
+                                isBelow = true;
                             }
 
-                            hashesToRight++;
+                            while (grid2[i].ContainsKey(x + 1))
+                            {
+                                x++;
+                            }
+
+                            if ((i > 0 && isBelow && grid2[i - 1].ContainsKey(x))
+                                || (i < grid2.Count - 1 && !isBelow && grid2[i + 1].ContainsKey(x)))
+                            {
+                                continue;
+                            }
                         }
+                        hashPoints.Add(x);
                     }
-                    if (hashesToRight % 2 != 0)
+                }
+
+                for(var j =  0; j < largestKey; j++)
+                {
+                    var hashesToRight = hashPoints.Where(x => x > j).Count();
+                    if(hashesToRight % 2 != 0)
                     {
                         z[j] = '#';
                     }
                 }
 
                 grid[i] = z;
-                //}
-            });
+                }
+            //});
             return grid.OrderBy(x => x.Key)
                 .Select(x => x.Value)
                 .ToList();
@@ -222,8 +218,8 @@ namespace ConsoleApp1
             var minGridXKey = grid.Values.SelectMany(x => x.Keys).Min();
             var width = largestKey - minGridYKey;
             var grid2 = CentreGrid(grid, minGridYKey, minGridXKey);
-            //var grid3 = FillGrid(width, grid2);
-            var grid3 = grid2;
+            var grid3 = FillGrid(width, grid2);
+            //var grid3 = grid2;
 
             //using (var f = new StreamWriter("D:\\Temp\\aoC18Out.txt"))
             //{
@@ -237,7 +233,7 @@ namespace ConsoleApp1
             //        f.Write('\n');
             //    }
             //}
-                
+
             Console.WriteLine(grid3.SelectMany(x => x.Values).Where(x => x == '#').LongCount());
         }
     }
