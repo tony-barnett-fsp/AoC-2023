@@ -3,6 +3,6 @@ using ConsoleApp1;
 
 Console.WriteLine("Hello, World!");
 
-new Day18().Part1();
-new Day18().Part2();
+new Day19().Part1();
+new Day19().Part2();
 
